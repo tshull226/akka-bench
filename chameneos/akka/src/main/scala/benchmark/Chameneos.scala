@@ -3,10 +3,12 @@
    contributed by Julien Gaugaz
    inspired by the version contributed by Yura Taras and modified by Isaac Gouy
 */
-package benchmark.akka.actor
+package benchmark.cs524
 
-import se.scalablesolutions.akka.actor.{Actor, ActorRef}
-import se.scalablesolutions.akka.actor.Actor._
+//import se.scalablesolutions.akka.actor.{Actor, ActorRef}
+//import se.scalablesolutions.akka.actor.Actor._
+import akka.actor._
+import kamon.Kamon
 
 object Chameneos {
   
@@ -29,8 +31,12 @@ object Chameneos {
   
   class Chameneo(var mall: ActorRef, var colour: Colour, cid: Int) extends Actor {
      var meetings = 0
-     self.start
-     mall ! Meet(self, colour)
+     //self.start
+     //mall ! Meet(self, colour)
+
+     override def init = {
+       mall ! Meet(self, colour)
+     }
 
      def receive = {
        case Meet(from, otherColour) =>
@@ -80,7 +86,10 @@ object Chameneos {
     var numFaded = 0
     
     override def init = {
-      for (i <- 0 until numChameneos) actorOf(new Chameneo(self, colours(i % 3), i))
+      for (i <- 0 until numChameneos) {
+        val chameneo = system.actorOf(Props(new Chameneo(self, colours(i % 3), i), "chameneo" + i))
+        //need to send it a starting message
+      }
     }
     
     def receive = {
@@ -108,11 +117,29 @@ object Chameneos {
     }
   }
   
+  /*
   def main(args : Array[String]): Unit = {
-    System.setProperty("akka.config", "akka.conf")
+    //System.setProperty("akka.config", "akka.conf")
     Chameneos.start = System.currentTimeMillis
     actorOf(new Mall(1000000, 4)).start
     Thread.sleep(10000)
     println("Elapsed: " + (end - start))
   }
+  */
 }
+
+
+/*
+object Main extends App {
+
+  //This is now necessary to add
+  //Kamon.start()
+
+  val system = ActorSystem("application")
+  Chameneos.start = System.currentTimeMillis
+  val mallActor = system.actorOf(Props(new Mall(1000000, 4)), "mall")
+  Thread.sleep(10000)
+  println("Elapsed: " + (end - start))
+
+}
+*/

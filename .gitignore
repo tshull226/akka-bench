@@ -32,3 +32,4 @@ tm.out
 .idea
 .scala_dependencies
 
+*.swp
