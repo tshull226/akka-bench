@@ -1,10 +1,17 @@
-package benchmark
+package benchmark.cs524.ring
 
+/*
 import se.scalablesolutions.akka.actor.{Actor, ActorRef}
 import se.scalablesolutions.akka.actor.Actor._
 import se.scalablesolutions.akka.dispatch.Dispatchers
 import se.scalablesolutions.akka.util.Logging
+*/
 
+import akka.actor._
+//import akka.util.Logging
+import akka.actor.Actor._
+
+/*
 object Ring extends Logging {
   def main(args: Array[String]): Unit = {
     System.setProperty("akka.config", "akka.conf")
@@ -34,6 +41,7 @@ object Ring extends Logging {
     for (i <- 0 until n) nodes(i) ! Connect(nodes(i + 1))
   }
 }
+*/
 
 case object StartMessage
 case object StopMessage
@@ -43,7 +51,8 @@ case class TokenMessage(id: Int, value: Int)
 
 class NodeActor(id: Int, var nextNode: ActorRef) extends Actor {
   val nodeId: Int = id
-  val timer = actorOf[TimerActor].start
+  //val timer = actorOf[TimerActor].start
+  val timer = context.system.actorOf(Props(new TimerActor))
   
   def receive = {
     case Connect(node) => 
@@ -54,8 +63,11 @@ class NodeActor(id: Int, var nextNode: ActorRef) extends Actor {
       nextNode ! TokenMessage(nodeId, 0)
 
     case StopMessage =>
-      if (nextNode.isRunning) nextNode ! StopMessage
-      self.stop
+      //if (nextNode.isRunning) nextNode ! StopMessage
+      //i think they have this just because it is a loop...
+      if (!nextNode.isTerminated) nextNode ! StopMessage
+      //self.stop
+      context.stop(self)
 
     case TokenMessage(id, value) =>
       if (id == nodeId) {
@@ -66,7 +78,8 @@ class NodeActor(id: Int, var nextNode: ActorRef) extends Actor {
           timer ! CancelMessage
           println("Stop: \t" + System.currentTimeMillis)
           nextNode ! StopMessage
-          self.stop
+          //self.stop
+          context.stop(self)
         } else nextNode ! TokenMessage(id, nextValue)        
       } else {
         nextNode ! TokenMessage(id, value)        
@@ -77,7 +90,7 @@ class NodeActor(id: Int, var nextNode: ActorRef) extends Actor {
 class TimerActor extends Actor {
   private var timing: Boolean = false
   private var startTime: Long = 0
-  self.start
+  //self.start
 
   def receive = {
     case StartMessage if !timing =>
@@ -89,6 +102,7 @@ class TimerActor extends Actor {
       println("Start = %s Stop = %s Elapsed = %s", startTime, end, (end - startTime))
       timing = false
 
-    case CancelMessage => self.stop
+    //case CancelMessage => self.stop
+    case CancelMessage => context.stop(self)
   }
 }

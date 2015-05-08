@@ -1,11 +1,14 @@
-package benchmark.akka
+package benchmark.cs524.pipeline
 
 import java.lang._
 import java.util.concurrent.CountDownLatch
 
-import se.scalablesolutions.akka.actor.{Actor, ActorRef}
-import se.scalablesolutions.akka.actor.Actor._
-import se.scalablesolutions.akka.dispatch.Dispatchers
+//import se.scalablesolutions.akka.actor.{Actor, ActorRef}
+//import se.scalablesolutions.akka.actor.Actor._
+//import se.scalablesolutions.akka.dispatch.Dispatchers
+
+import akka.actor._
+import akka.dispatch._
 
 case object StopMessage
 
@@ -14,6 +17,7 @@ object ActorManager {
   val latch = new CountDownLatch(3)
   def decrementLatch = latch.countDown
 
+  /*
   def main(args: Array[String]) {
     System.setProperty("akka.config", "akka.conf")
 
@@ -30,11 +34,13 @@ object ActorManager {
     write.stop
     println("Elapsed = " + (System.currentTimeMillis - start))
   }
+  */
 }
 
 
 class DownloadActor(index: ActorRef) extends Actor {
-  self.dispatcher = Dispatchers.newThreadBasedDispatcher(self)
+  //self.dispatcher = Dispatchers.newThreadBasedDispatcher(self)
+  //context.dispatcher = Dispatchers.
   def receive = {
     case payload: String =>
       index ! payload.replaceFirst("Requested ", "Downloaded ")
@@ -46,7 +52,7 @@ class DownloadActor(index: ActorRef) extends Actor {
 }
 
 class IndexActor(write: ActorRef) extends Actor {
-  self.dispatcher = Dispatchers.newThreadBasedDispatcher(self)
+  //self.dispatcher = Dispatchers.newThreadBasedDispatcher(self)
   def receive = {
     case payload: String =>
       write ! payload.replaceFirst("Downloaded ", "Indexed ")
@@ -58,7 +64,7 @@ class IndexActor(write: ActorRef) extends Actor {
 }
 
 class WriteActor extends Actor {
-  self.dispatcher = Dispatchers.newThreadBasedDispatcher(self)
+  //self.dispatcher = Dispatchers.newThreadBasedDispatcher(self)
   def receive = {
     case payload: String =>
       payload.replaceFirst("Indexed ", "Wrote ")

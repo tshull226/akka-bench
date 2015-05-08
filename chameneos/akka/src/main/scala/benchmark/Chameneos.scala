@@ -34,7 +34,7 @@ object Chameneos {
      //self.start
      //mall ! Meet(self, colour)
 
-     override def init = {
+     override def preStart() = {
        mall ! Meet(self, colour)
      }
 
@@ -52,7 +52,8 @@ object Chameneos {
 
        case Exit =>
          colour = FADED
-         self.sender.get ! MeetingCount(meetings)
+         //self.sender.get ! MeetingCount(meetings)
+         sender ! MeetingCount(meetings)
      }
 
      def complement(otherColour: Colour): Colour = colour match {
@@ -85,9 +86,10 @@ object Chameneos {
     var sumMeetings = 0
     var numFaded = 0
     
-    override def init = {
+    override def preStart() = {
       for (i <- 0 until numChameneos) {
-        val chameneo = system.actorOf(Props(new Chameneo(self, colours(i % 3), i), "chameneo" + i))
+        //val chameneo = system.actorOf(Props(new Chameneo(self, colours(i % 3), i), "chameneo" + i))
+        val chameneo = context.system.actorOf(Props(new Chameneo(self, colours(i % 3), i)), "chameneo" + i)
         //need to send it a starting message
       }
     }
@@ -98,7 +100,8 @@ object Chameneos {
         sumMeetings += i
         if (numFaded == numChameneos) {
           Chameneos.end = System.currentTimeMillis
-          self.stop
+          //self.stop
+          context.stop(self)
         }
           
       case msg @ Meet(a, c) =>
@@ -108,11 +111,13 @@ object Chameneos {
               n -= 1
               chameneo ! msg 
               waitingChameneo = None
-            case None => waitingChameneo = self.sender
+            //case None => waitingChameneo = self.sender
+            case None => waitingChameneo = Some(sender)
           }
         } else {
           waitingChameneo.foreach(_ ! Exit)
-          self.sender.get ! Exit
+          //self.sender.get ! Exit
+          sender ! Exit
         }
     }
   }
